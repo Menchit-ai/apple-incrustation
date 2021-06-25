@@ -1,15 +1,29 @@
-import cv2 as cv
-import numpy as np
-import matplotlib.pyplot as plt
-import time
-from tqdm.auto import tqdm
 import math
 import os
 import random
-from PIL import Image
+import time
+import warnings
+
+import cv2 as cv
 import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
+from tqdm.auto import tqdm
 from xgboost import XGBRegressor
 
+warnings.filterwarnings("ignore")
+
+def croping_object(file):
+    img = cv.imread(file)
+    positions = np.nonzero(img)
+
+    top = positions[0].min()
+    bottom = positions[0].max()
+    left = positions[1].min()
+    right = positions[1].max()
+
+    return img[top:bottom,left:right,:]
 
 def show(matrix):
     if len(matrix.shape)==3 : matrix = matrix[:,:,::-1]
@@ -51,6 +65,7 @@ def extract(im, size,coord=None):
     return im[x_start:x_end,y_start:y_end,:],(x_start,x_end),(y_start,y_end)
 
 def light_vectorization(image):
+    image = cv.imread(image,cv.IMREAD_GRAYSCALE)
     thresh = cv.threshold(image, 160, 255, cv.THRESH_BINARY)[1]
     thresh = add_noise(thresh, iterations=5)
     thresh = thresh - cv.erode(thresh, None, iterations=1)
@@ -59,16 +74,14 @@ def light_vectorization(image):
     (numLabels, labels, stats, centroids) = output
     
     centroids = centroids.astype(int)
-    sort = np.sort(centroids,axis=0)
-    first,last = sort[0],sort[-1]
     
     x = centroids[:,0].reshape(-1,1)
     y = centroids[:,1]
-    gbr = xgboost.XGBRegressor(random_state=42)
+    gbr = XGBRegressor(random_state=42)
     gbr.fit(x,y)
     start = (0,int(gbr.predict(np.asarray([[0]]))))
-    end = (direct_light.shape[1],int(gbr.predict(np.asarray([[direct_light.shape[1]]]))))
-    return star,end
+    end = (image.shape[1],int(gbr.predict(np.asarray([[image.shape[1]]]))))
+    return start,end
 
 
 def compute_impact(image,extraction,vect):
@@ -82,7 +95,7 @@ def compute_impact(image,extraction,vect):
         vect = (dark-light)/(image.shape[0])*x[0]
         impact = np.asarray([x[0],y[0]+vect[1]]).astype(np.float32)
 
-    elif light[0]==field.shape[0]-1:
+    elif light[0]==image.shape[0]-1:
         side = np.asarray([[x[1],y[0]],[x[1],y[1]]])
         vect = (dark-light)/(image.shape[0])*(image.shape[0]-x[1])
         impact = np.asarray([x[1],y[0]+vect[1]]).astype(np.float32)
@@ -99,6 +112,7 @@ def compute_impact(image,extraction,vect):
 
 def create_light_v2(image,position):
     import math
+
     import cv2 as cv
     
     x,y,_ = image.shape

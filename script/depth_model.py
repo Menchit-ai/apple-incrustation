@@ -16,6 +16,8 @@ import networks
 import cmapy
 import cv2 as cv
 
+os.chdir("..")
+
 def download_model_if_doesnt_exist(model_name):
     """If pretrained kitti model doesn't exist, download and unzip it
     """
