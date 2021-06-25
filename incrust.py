@@ -3,6 +3,7 @@ import math
 import os
 import pickle
 import random
+import shutil
 import time
 
 import cv2 as cv
@@ -10,8 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm.auto import tqdm
 
-import script.library as lib
-from script.depth_model import depth_model
+import lib.library as lib
+from lib.depth_model import depth_model
 
 parser = argparse.ArgumentParser()
 parser.add_argument("background", help="the path where the background images are stored",type=str)
@@ -39,12 +40,18 @@ def main():
 
     if not os.path.isdir(".light") : os.mkdir(".light")
     if not os.path.isdir(".cropped_objects") : os.mkdir(".cropped_objects")
+    if not os.path.isdir(".depths") : os.mkdir(".depths")
+    if os.path.isdir(args.output) : shutil.rmtree(args.output)
+    os.mkdir(args.output)
+    output_folder = args.output
 
     # compute the starting and ending point of the light vector for each image and store them in a .light folder
     for background in backgrounds:
         light_vector = lib.light_vectorization(background)
+        depths = depth_model().load_image(background).extract_depth(4)
         filename = os.path.basename(background).split('.')[0] + '.bin'
         with open('.light/'+filename,'wb') as f : pickle.dump(light_vector,f)
+        with open('.depths/'+filename,'wb') as f : pickle.dump(depths,f)
     
     # cropping all the object (using black pixels) and store the new files in binaries in the .cropped_objects
     for object in objects:
@@ -52,6 +59,25 @@ def main():
         filename = os.path.basename(object).split('.')[0] + '.bin'
         with open('.cropped_objects/'+filename,'wb') as f : pickle.dump(cropping_object,f)
 
+    # looping on how many images we want to generate
+    count = 0
+    for i in range(args.number):
+        background = random.choice(backgrounds)
+        # incrusting a random number of objects between 1 and the iteration argument of the script
+        for j in range(random.randint(1,args.iteration)):
+            object = random.choice(objects)
+            incrustation = incrust(background, object)
+            back_name = os.path.basename(background).split('.')[0]
+            obj_name = os.path.basename(object).split('.')[0]
+            filename = os.path.join(output_folder,"_".join([str(count),back_name,obj_name+".jpg"]))
+            open(filename,'w').close()
+            cv.imwrite(filename,incrustation)
+            count += 1
+
+
+def incrust(background,object):
+    depth = depth_model().load_image(background)
+    # lightened_object = light_object(background,light_vector,object)
 
 if __name__ == "__main__":
     main()
