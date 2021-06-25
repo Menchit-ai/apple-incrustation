@@ -39,7 +39,6 @@ class depth_model():
 
         self.encoder.eval()
         self.depth_decoder.eval()
-        os.chdir("..")
     
     
     def get_image(self) : return self.input_image
@@ -51,6 +50,7 @@ class depth_model():
         
         Argument : filename
         """
+        self.image_name = image_path
         self.input_image = pil.open(image_path).convert('RGB')
         original_width, original_height = self.input_image.size
 
@@ -115,7 +115,7 @@ class depth_model():
         inter = np.arange(0,_max+step,step)
         res = []
         
-        print("Starting extraction")
+        print("Creation of depth in "+self.image_name)
         for k in tqdm(range(len(inter)-1)):
             thresh = threshold(self.imap,inter[k],inter[k+1])
             res.append(thresh)

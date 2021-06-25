@@ -84,8 +84,8 @@ def light_vectorization(image):
     return start,end
 
 
-def compute_impact(image,extraction,vect):
-    square,x,y = extraction
+def compute_impact(image,coord,vect):
+    x,y = coord
     start, end = vect
     if start[1] > start[0] : light, dark = np.asarray(start), np.asarray(end)
     else : dark, light = np.asarray(end), np.asarray(start)
@@ -93,12 +93,14 @@ def compute_impact(image,extraction,vect):
     if light[0]==0:
         side = np.asarray([[x[0],y[0]],[x[0],y[1]]])
         vect = (dark-light)/(image.shape[0])*x[0]
-        impact = np.asarray([x[0],y[0]+vect[1]]).astype(np.float32)
+        locy = vect[1]/image.shape[1] * (y[1]-y[0])
+        impact = np.asarray([x[0],locy]).astype(np.float32)
 
     elif light[0]==image.shape[0]-1:
         side = np.asarray([[x[1],y[0]],[x[1],y[1]]])
         vect = (dark-light)/(image.shape[0])*(image.shape[0]-x[1])
-        impact = np.asarray([x[1],y[0]+vect[1]]).astype(np.float32)
+        locy = vect[1]/image.shape[1] * (y[1]-y[0])
+        impact = np.asarray([x[0],locy]).astype(np.float32)
 
     elif light[1]==0:
         side = np.asarray([[x[0],y[0]],[x[1],y[0]]])
@@ -108,6 +110,31 @@ def compute_impact(image,extraction,vect):
     else: raise Exception()
 
     return (impact - [x[0],y[0]]).astype(np.uint8)
+
+def report_impact(image,coord,vect):
+    x,y = coord
+    start, end = vect
+    if start[1] > start[0] : light, dark = np.asarray(start), np.asarray(end)
+    else : dark, light = np.asarray(end), np.asarray(start)
+
+    if light[0]==0:
+        position = start[1]/image.shape[1]
+        locy = (y[1]-y[0])*position
+        impact = np.asarray([0,locy])
+
+    elif light[0]==image.shape[0]-1:
+        position = start[1]/image.shape[1]
+        locy = y[0] + (y[1]-y[0])*position
+        impact = np.asarray([image.shape[0],locy-y[0]]).astype(np.float32)
+
+    elif light[1]==0:
+        side = np.asarray([[x[0],y[0]],[x[1],y[0]]])
+        pos = light[0]/image.shape[0]
+        impact = np.asarray([x[0],(y[1]-y[0])*pos]).astype(np.float32)
+
+    else: raise Exception()
+
+    return impact.astype(np.uint8)
 
 
 def create_light_v2(image,position):
@@ -288,6 +315,37 @@ def combinev2(im1, im2,kernel=(10,10)):
     final_image = final_image.astype(np.uint8)
 
     return final_image
+
+def combinev3(background, object, light_object, kernel=(10,10)):
+
+    shape = background.shape
+    light_object = light_object[:,:,::-1]
+    
+    gray = cv.cvtColor(object, cv.COLOR_BGR2GRAY)
+    thresh = cv.threshold(gray, 0, 255, cv.THRESH_BINARY)[1]
+    kernel = np.ones(kernel, np.uint8)
+    thresh = cv.erode(thresh, kernel, iterations=1).astype(np.uint8)
+    thresh = cv.resize(thresh, (background.shape[1], background.shape[0]))
+    mask = thresh.astype(bool)
+    
+    object = cv.resize(object, (background.shape[1], background.shape[0]))
+
+    brightness = adjust_brightness(background,object,(10,10))
+    contrast = adjust_contrast(background,object,(10,10))
+    object = channel_operand(object,contrast,"mult")
+    object = channel_operand(object,brightness,"add").astype(np.uint8)
+    object = cv.GaussianBlur(object,(11,11),0)
+    
+    final_image = np.zeros(shape)
+    for k in range(final_image.shape[2]):
+        for i in range(final_image.shape[0]):
+            for j in range(final_image.shape[1]):
+                if not mask[i, j]: final_image[i, j, k] = background[i, j, k]
+                else: final_image[i, j, k] = light_object[i, j, k]
+
+    final_image = final_image.astype(np.uint8)
+
+    return final_image[:,:,::-1]
 
 def reconstruct(images,masks):
     assert len(images)==len(masks)
