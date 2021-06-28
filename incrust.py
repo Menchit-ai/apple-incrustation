@@ -9,6 +9,7 @@ import time
 import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
+import PIL
 from rich.console import Console
 from torch.nn.modules import module
 from tqdm.auto import tqdm
@@ -57,7 +58,7 @@ def main():
         model.load_image(background)
         depths = model.extract_depth(args.depths)
         imap = model.get_imap()
-        filename = os.path.basename(background).split('.')[0] + '.bin'
+        filename = os.path.basename(background).split('.')[0]
         with open('.light/'+filename,'wb') as f : pickle.dump(light_vector,f)
         with open('.depths/'+filename,'wb') as f : pickle.dump(depths,f)
         with open('.imaps/'+filename,'wb') as f : pickle.dump(imap,f)
@@ -71,7 +72,7 @@ def main():
     # looping on how many images we want to generate
     
     console.print("\n"+
-        "Begining extraction"+
+        "Begining incrustation at different depths"+
         "\n", style = "bold red")
 
     for i in range(args.number):
@@ -82,25 +83,37 @@ def main():
         console.print(img_filename, style = "bold blue")
         open(img_filename,'w').close()
         open(area_filename,'w').close()
-        cv.imwrite(img_filename,cv.imread(background))
+        cv.imwrite(img_filename,cv.imread(background)[:,:,::-1])
+        shutil.copyfile('.depths/'+os.path.basename(background).split('.')[0] + '.bin','.depths/'+os.path.basename(img_filename).split(".")[0]+".bin")
 
         # incrusting a random number of objects between 1 and the iteration argument of the script
         for j in tqdm(range(random.randint(1,args.iteration))):
             object = random.choice(objects)
-            incrustation,area = incrust(background, object)
+            incrustation,area = incrust(img_filename, object, back_name)
             with open(area_filename,'a') as f : f.write(area+"\n")
             cv.imwrite(img_filename,incrustation)
 
+    console.print("\n"+
+        "Reconstructing each images"+
+        "\n", style = "bold red")
 
-def incrust(background,object):
-    bin_background = os.path.basename(background).split('.')[0]+'.bin'
+    console.print("\n"+
+        "Converting all image from BGR to RGB"+
+        "\n", style = "bold red")
+
+    bgr_files = [os.path.join(output_folder,f) for f in os.listdir(output_folder) if f.endswith(".jpg")]
+    for bgr in tqdm(bgr_files) : cv.imwrite(bgr,cv.imread(bgr)[:,:,::-1])
+
+
+def incrust(background,object,back_name):
+    bin_background = os.path.basename(back_name).split('.')[0]+'.bin'
     bin_object = os.path.basename(object).split('.')[0]+'.bin'
 
-    with open(os.path.join(".depths",bin_background),'rb') as f : depths = pickle.load(f)
+    with open(os.path.join(".depths",os.path.basename(background).split('.')[0]+".bin"),'rb') as f : depths = pickle.load(f)
     with open(os.path.join(".imaps",bin_background),'rb') as f : imap = pickle.load(f)
     with open(os.path.join(".light",bin_background),'rb') as f : light_vector = pickle.load(f)
     back_image = cv.imread(background)
-    object_image = cv.imread(os.path.join(".cropped_objects",os.path.basename(object)))
+    object_image = cv.imread(os.path.join(".cropped_objects",os.path.basename(object)))[:,:,::-1]
 
     back_shape = back_image.shape
     object_shape = object_image.shape
@@ -112,8 +125,7 @@ def incrust(background,object):
     which_point = random.randint(0,len(points[0])-1)
     # this point will be used to determine the diminution apply to our object
     point = (points[0][which_point],points[1][which_point])
-    # scale = imap[point]/255
-    scale = 1
+    scale = imap[point]/255
 
     # we now have to apply our scale by making our object the greatest possible and then to reduce it with our scale
 
@@ -131,11 +143,13 @@ def incrust(background,object):
     if new_x <0 or new_y < 0 : Exception(new_x,new_y,point)
     starter = (new_x, new_y)
     area,x,y = lib.extract(depths[where],object_shape[:-1],starter)
-
+    
     # now we know where we are going to incrust our object, we will first apply the lightning of our background image on our object
     lightened_object = light_object(back_image,light_vector,object_image,(x,y))
     area = lib.combinev3(area, object_image, lightened_object)
-    back_image[x[0]:x[1],y[0]:y[1],:] = area
+    depths[where][x[0]:x[1],y[0]:y[1],:] = area
+    with open(os.path.join(".depths",os.path.basename(background).split('.')[0]+".bin"),'wb') as f : pickle.dump(depths,f)
+    back_image = lib.reconstruct(depths)
     return back_image," ".join([str(0),str(x[0]),str(x[1]),str(y[0]),str(y[1])])
 
 

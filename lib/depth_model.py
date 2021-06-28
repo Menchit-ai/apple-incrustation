@@ -51,7 +51,7 @@ class depth_model():
         Argument : filename
         """
         self.image_name = image_path
-        self.input_image = pil.open(image_path).convert('RGB')
+        self.input_image = pil.open(image_path)#.convert('RGB')
         original_width, original_height = self.input_image.size
 
         feed_height = self.loaded_dict_enc['height']

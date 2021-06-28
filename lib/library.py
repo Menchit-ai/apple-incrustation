@@ -319,7 +319,7 @@ def combinev2(im1, im2,kernel=(10,10)):
 def combinev3(background, object, light_object, kernel=(10,10)):
 
     shape = background.shape
-    light_object = light_object[:,:,::-1]
+    # light_object = light_object[:,:,::-1]
     
     gray = cv.cvtColor(object, cv.COLOR_BGR2GRAY)
     thresh = cv.threshold(gray, 0, 255, cv.THRESH_BINARY)[1]
@@ -345,17 +345,12 @@ def combinev3(background, object, light_object, kernel=(10,10)):
 
     final_image = final_image.astype(np.uint8)
 
-    return final_image[:,:,::-1]
+    return final_image
 
-def reconstruct(images,masks):
-    assert len(images)==len(masks)
-    assert images[0].shape == images[-1].shape
-    new_image = Image.fromarray(np.zeros(images[0].shape).astype(np.uint8))
-    
-    for i in range(len(images)):
-        im = Image.fromarray(images[i]).convert("RGBA")
-        mask = Image.fromarray(masks[i]).convert("RGBA")
-        new_image = Image.composite(new_image,im,mask)
+def reconstruct(images):
+    new_image = np.zeros(images[0].shape)   
+    for im in images:
+        new_image = add_non_black(new_image,im)
     return new_image
 
 def add_non_black(im1,im2):
