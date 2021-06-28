@@ -44,11 +44,15 @@ def main():
     if len(backgrounds)==0 : raise Exception(args.background,"is empty")
     if len(objects)==0 : raise Exception(args.objects,"is empty")
 
-    if not os.path.isdir(".light") : os.mkdir(".light")
-    if not os.path.isdir(".cropped_objects") : os.mkdir(".cropped_objects")
-    if not os.path.isdir(".depths") : os.mkdir(".depths")
-    if not os.path.isdir(".imaps") : os.mkdir(".imaps")
+    if os.path.isdir(".light") : shutil.rmtree(".light")
+    if os.path.isdir(".cropped_objects") : shutil.rmtree(".cropped_objects")
+    if os.path.isdir(".depths") : shutil.rmtree(".depths")
+    if os.path.isdir(".imaps") : shutil.rmtree(".imaps")
     if os.path.isdir(args.output) : shutil.rmtree(args.output)
+    os.mkdir(".light")
+    os.mkdir(".cropped_objects")
+    os.mkdir(".depths")
+    os.mkdir(".imaps")
     os.mkdir(args.output)
     output_folder = args.output
 
@@ -72,7 +76,7 @@ def main():
     # looping on how many images we want to generate
     
     console.print("\n"+
-        "Begining incrustation at different depths"+
+        "Begining incrustations at different depths"+
         "\n", style = "bold red")
 
     for i in range(args.number):
@@ -84,18 +88,24 @@ def main():
         open(img_filename,'w').close()
         open(area_filename,'w').close()
         cv.imwrite(img_filename,cv.imread(background)[:,:,::-1])
-        shutil.copyfile('.depths/'+os.path.basename(background).split('.')[0] + '.bin','.depths/'+os.path.basename(img_filename).split(".")[0]+".bin")
+        shutil.copyfile('.depths/'+os.path.basename(background).split('.')[0],'.depths/'+os.path.basename(img_filename).split(".")[0]+".bin")
 
         # incrusting a random number of objects between 1 and the iteration argument of the script
-        for j in tqdm(range(random.randint(1,args.iteration))):
+        for _ in tqdm(range(random.randint(1,args.iteration))):
             object = random.choice(objects)
-            incrustation,area = incrust(img_filename, object, back_name)
+            area = incrust(img_filename, object, back_name)
             with open(area_filename,'a') as f : f.write(area+"\n")
-            cv.imwrite(img_filename,incrustation)
 
     console.print("\n"+
         "Reconstructing each images"+
         "\n", style = "bold red")
+
+    depths_file = [os.path.join(".depths",f) for f in os.listdir(".depths") if f.endswith(".bin")]
+    for depth_file in tqdm(depths_file) : 
+        with open(depth_file,'rb') as f : depth = pickle.load(f)
+        image = lib.reconstruct(depth)
+        filename = os.path.join(output_folder,os.path.basename(depth_file).split('.')[0]+'.jpg')
+        cv.imwrite(filename,image)
 
     console.print("\n"+
         "Converting all image from BGR to RGB"+
@@ -106,7 +116,7 @@ def main():
 
 
 def incrust(background,object,back_name):
-    bin_background = os.path.basename(back_name).split('.')[0]+'.bin'
+    bin_background = os.path.basename(back_name).split('.')[0]
     bin_object = os.path.basename(object).split('.')[0]+'.bin'
 
     with open(os.path.join(".depths",os.path.basename(background).split('.')[0]+".bin"),'rb') as f : depths = pickle.load(f)
@@ -149,8 +159,7 @@ def incrust(background,object,back_name):
     area = lib.combinev3(area, object_image, lightened_object)
     depths[where][x[0]:x[1],y[0]:y[1],:] = area
     with open(os.path.join(".depths",os.path.basename(background).split('.')[0]+".bin"),'wb') as f : pickle.dump(depths,f)
-    back_image = lib.reconstruct(depths)
-    return back_image," ".join([str(0),str(x[0]),str(x[1]),str(y[0]),str(y[1])])
+    return " ".join([str(0),str(x[0]),str(x[1]),str(y[0]),str(y[1])])
 
 
 def light_object(back_image,light_vector,object_image,coord):

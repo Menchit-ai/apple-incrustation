@@ -350,17 +350,20 @@ def combinev3(background, object, light_object, kernel=(10,10)):
 def reconstruct(images):
     new_image = np.zeros(images[0].shape)   
     for im in images:
-        new_image = add_non_black(new_image,im)
+        new_image = paste_non_black(new_image,im)
     return new_image
 
-def add_non_black(im1,im2):
+def paste_non_black(im1,im2):
     base = im1.copy()
     _2add = im2.copy()
 
-    x,y,_ = base.shape
-    for i in range(x):
-        for j in range(y):
-            if not tuple(_2add[i][j]) == (0,0,0): base[i][j] = _2add[i][j]
+    non_black_indices = np.nonzero(cv.cvtColor(_2add,cv.COLOR_BGR2GRAY))
+    base[non_black_indices] = _2add[non_black_indices]
+
+    # x,y,_ = base.shape
+    # for i in range(x):
+    #     for j in range(y):
+    #         if not tuple(_2add[i][j]) == (0,0,0): base[i][j] = _2add[i][j]
     return base.astype(np.uint8)
 
 

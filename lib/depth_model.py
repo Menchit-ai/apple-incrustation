@@ -11,11 +11,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import PIL.Image as pil
 import torch
+from rich.console import Console
 from torchvision import transforms
 from tqdm.auto import tqdm
 
-from .networks import ResnetEncoder, DepthDecoder
+from .networks import DepthDecoder, ResnetEncoder
 from .utils import download_model_if_doesnt_exist
+
+console = Console()
 
 class depth_model():
        
@@ -115,7 +118,7 @@ class depth_model():
         inter = np.arange(0,_max+step,step)
         res = []
         
-        print("Creation of depth in "+self.image_name)
+        console.print("Creation of depth in "+self.image_name, style="bold green")
         for k in tqdm(range(len(inter)-1)):
             thresh = threshold(self.imap,inter[k],inter[k+1])
             res.append(thresh)
