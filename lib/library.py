@@ -1,15 +1,10 @@
-import math
-import os
+
 import random
-import time
 import warnings
 
 import cv2 as cv
-import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
-from tqdm.auto import tqdm
 from xgboost import XGBRegressor
 
 warnings.filterwarnings("ignore")
