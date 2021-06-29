@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 import os
 
-import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
 import PIL.Image as pil
