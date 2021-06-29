@@ -82,59 +82,52 @@ def light_vectorization(image):
 def compute_impact(image,coord,vect):
     x,y = coord
     start, end = vect
-    if start[1] > start[0] : light, dark = np.asarray(start), np.asarray(end)
-    else : dark, light = np.asarray(end), np.asarray(start)
+    if start[1] < end[1] : light, dark = np.asarray(start), np.asarray(end)
+    else : light, dark = np.asarray(end), np.asarray(start)
 
     if light[0]==0:
-        side = np.asarray([[x[0],y[0]],[x[0],y[1]]])
         vect = (dark-light)/(image.shape[0])*x[0]
         locy = vect[1]/image.shape[1] * (y[1]-y[0])
         impact = np.asarray([x[0],locy]).astype(np.float32)
 
-    elif light[0]==image.shape[0]-1:
+    elif light[1]==0:
+        pos = light[0]/image.shape[0]
+        impact = np.asarray([x[0],(y[1]-y[0])*pos]).astype(np.float32)
+
+    else:
         side = np.asarray([[x[1],y[0]],[x[1],y[1]]])
         vect = (dark-light)/(image.shape[0])*(image.shape[0]-x[1])
         locy = vect[1]/image.shape[1] * (y[1]-y[0])
         impact = np.asarray([x[0],locy]).astype(np.float32)
-
-    elif light[1]==0:
-        side = np.asarray([[x[0],y[0]],[x[1],y[0]]])
-        pos = light[0]/image.shape[0]
-        impact = np.asarray([x[0],(y[1]-y[0])*pos]).astype(np.float32)
-
-    else: raise Exception()
 
     return (impact - [x[0],y[0]]).astype(np.uint8)
 
 def report_impact(image,coord,vect):
     x,y = coord
     start, end = vect
-    if start[1] > start[0] : light, dark = np.asarray(start), np.asarray(end)
-    else : dark, light = np.asarray(end), np.asarray(start)
+    if start[1] < end[1] : light, dark = np.asarray(start), np.asarray(end)
+    else : light, dark = np.asarray(end), np.asarray(start)
 
     if light[0]==0:
         position = start[1]/image.shape[1]
         locy = (y[1]-y[0])*position
         impact = np.asarray([0,locy])
 
-    elif light[0]==image.shape[0]-1:
-        position = start[1]/image.shape[1]
-        locy = y[0] + (y[1]-y[0])*position
-        impact = np.asarray([image.shape[0],locy-y[0]]).astype(np.float32)
-
     elif light[1]==0:
         side = np.asarray([[x[0],y[0]],[x[1],y[0]]])
         pos = light[0]/image.shape[0]
         impact = np.asarray([x[0],(y[1]-y[0])*pos]).astype(np.float32)
 
-    else: raise Exception()
+    else:
+        position = start[1]/image.shape[1]
+        locy = y[0] + (y[1]-y[0])*position
+        impact = np.asarray([image.shape[0],locy-y[0]]).astype(np.float32)
 
     return impact.astype(np.uint8)
 
 
 def create_light_v2(image,position):
     import math
-
     import cv2 as cv
     
     x,y,_ = image.shape
@@ -144,18 +137,22 @@ def create_light_v2(image,position):
     dark = np.asarray([x,y]) - position
 
     # Radius of circle
-    radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2)/2 )
+    p = 13
+    d = 16
+    radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2)/2)
+    light_radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2)/d )*p
+    dark_radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2)/d )*(d-p)
     thickness = -1
     
     ran = np.arange(0,0.5,(0.5/radius))
     
     for i in range(radius):
-        new_brightness = 0.5+ran[i]
-        new_darkness = 0.5-ran[i]
-        new_radius = radius-i
-
-        image = cv.circle(image, tuple(light), new_radius, new_brightness, thickness)
-        image = cv.circle(image, tuple(dark), new_radius, new_darkness, thickness)
+        new_brightness = min(0.5+ran[i],1)
+        new_darkness = max(0.5-ran[i],0)
+        new_light_radius = max(light_radius-i,0)
+        new_dark_radius = max(dark_radius-i,0)       
+        image = cv.circle(image, tuple(dark), new_dark_radius, new_darkness, thickness)
+        image = cv.circle(image, tuple(light), new_light_radius, new_brightness, thickness)
 
     return image
 
@@ -314,23 +311,15 @@ def combinev2(im1, im2,kernel=(10,10)):
 def combinev3(background, object, light_object, kernel=(10,10)):
 
     shape = background.shape
-    # light_object = light_object[:,:,::-1]
     
     gray = cv.cvtColor(object, cv.COLOR_BGR2GRAY)
     thresh = cv.threshold(gray, 0, 255, cv.THRESH_BINARY)[1]
     kernel = np.ones(kernel, np.uint8)
     thresh = cv.erode(thresh, kernel, iterations=1).astype(np.uint8)
-    thresh = cv.resize(thresh, (background.shape[1], background.shape[0]))
-    mask = thresh.astype(bool)
+    mask = cv.resize(thresh, (background.shape[1], background.shape[0])).astype(bool)
     
-    object = cv.resize(object, (background.shape[1], background.shape[0]))
-
-    brightness = adjust_brightness(background,object,(10,10))
-    contrast = adjust_contrast(background,object,(10,10))
-    object = channel_operand(object,contrast,"mult")
-    object = channel_operand(object,brightness,"add").astype(np.uint8)
-    object = cv.GaussianBlur(object,(11,11),0)
-    
+    object = cv.resize(object, (background.shape[0], background.shape[0]))
+   
     final_image = np.zeros(shape)
     for k in range(final_image.shape[2]):
         for i in range(final_image.shape[0]):
@@ -355,10 +344,6 @@ def paste_non_black(im1,im2):
     non_black_indices = np.nonzero(cv.cvtColor(_2add,cv.COLOR_BGR2GRAY))
     base[non_black_indices] = _2add[non_black_indices]
 
-    # x,y,_ = base.shape
-    # for i in range(x):
-    #     for j in range(y):
-    #         if not tuple(_2add[i][j]) == (0,0,0): base[i][j] = _2add[i][j]
     return base.astype(np.uint8)
 
 

@@ -150,6 +150,7 @@ def incrust(background,object,back_name):
     
     # now we know where we are going to incrust our object, we will first apply the lightning of our background image on our object
     lightened_object = light_object(back_image,light_vector,object_image,(x,y))
+    
     area = lib.combinev3(area, object_image, lightened_object)
     depths[where][x[0]:x[1],y[0]:y[1],:] = area
     with open(os.path.join(".depths",os.path.basename(background).split('.')[0]+".bin"),'wb') as f : pickle.dump(depths,f)
