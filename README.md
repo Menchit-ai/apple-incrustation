@@ -7,7 +7,7 @@ Object detection algorithms, such as yolo, are models that needs a lot of sample
 This project's purpose is to reduce the part attribute to this human hand and to automatically create a dataset using objects and backgrounds.
 
 It will incrust the objects in the backgrounds and try to mimic a realistics photography. While incrusting the objects, the algorithm will store the area where all the objects are incrusted and write those values in a file along with the generated image. Finnally, we obtain a dataset of labellized images and the file that store the coordinates of our incrusted objects.
-![The San Juan Mountains are beautiful!](./images/san-juan-mountains.jpg "San Juan Mountains")
+![Oahu is better with apples!](./images/proof_example.png "Oahu is better with apples!")
 
 ## Setup
 
@@ -32,3 +32,7 @@ You can add 3 optionnal parameters :
 - The algorithm can still be optimized by removing some computation espacially in the case when we want to generate less images than we have in our background folder.
 - The incrusted apples can be hidden behind objects or behind other apples but the algorithm will still write the full coordinates of the apples even though they are not visible. This means that we can obtain apple where there is only a wall or another apple.
 - Finally, the objects that will be incrusted must be on a black background (or transparent background) because the algorithm use masks that take all non black pixels. So if the beackground is green, the algorithm will incrust the green along with the object.
+
+## Results
+
+end
