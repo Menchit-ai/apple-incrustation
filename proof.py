@@ -6,7 +6,7 @@ from tqdm.auto import tqdm
 
 
 def main(output,proof):
-    files = [f.split('.')[0] for f in os.listdir(output)]
+    files = [f.split('.')[0] for f in os.listdir(output)][::2]
     jpg = [f+".jpg" for f in files]
     txt = [f+".txt" for f in files]
 

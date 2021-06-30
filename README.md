@@ -27,8 +27,7 @@ You can add 3 optionnal parameters :
 
 ## Limitations
 
-This first version still has some issues.
-
 - First the light estimation used to adjust our images is not perfect and cannot be used if the light source in directly in the image. It also assumes that the light is comming from above and not from under the object.
+- The algorithm can still be optimized by removing some computation espacially in the case when we want to generate less images than we have in our background folder.
 - The incrusted apples can be hidden behind objects or behind other apples but the algorithm will still write the full coordinates of the apples even though they are not visible. This means that we can obtain apple where there is only a wall or another apple.
 - Finally, the objects that will be incrusted must be on a black background (or transparent background) because the algorithm use masks that take all non black pixels. So if the beackground is green, the algorithm will incrust the green along with the object.
