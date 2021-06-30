@@ -58,7 +58,7 @@ def main():
     for background in backgrounds:
         light_vector = lib.light_vectorization(background)
         model.load_image(background)
-        depths = model.extract_depth(args.depths)
+        depths = model.extract_depth(args.depth)
         imap = model.get_imap()
         filename = os.path.basename(background).split('.')[0]
         with open('.light/'+filename,'wb') as f : pickle.dump(light_vector,f)
