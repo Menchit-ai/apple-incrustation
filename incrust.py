@@ -91,7 +91,7 @@ def main():
         # incrusting a random number of objects between 1 and the iteration argument of the script
         for _ in tqdm(range(random.randint(1,args.iteration))):
             object = random.choice(objects)
-            try : area = incrust(img_filename, object, back_name)
+            try : area = incrust(img_filename, object, back_name, 0)
             except : raise Exception("Cannot handle "+object)
             with open(area_filename,'a') as f : f.write(area+"\n")
 
@@ -122,7 +122,7 @@ def main():
     console.log("The programm was executed in {:.2f}".format(end_timing-start_timing)+"s\n", style = "bold green")
 
 
-def incrust(background,object,back_name):
+def incrust(background,object,back_name,label):
     bin_background = os.path.basename(back_name).split('.')[0]
     bin_object = os.path.basename(object).split('.')[0]+'.bin'
 
@@ -167,7 +167,7 @@ def incrust(background,object,back_name):
     area = lib.combinev3(area, object_image, lightened_object)
     depths[where][x[0]:x[1],y[0]:y[1],:] = area
     with open(os.path.join(".depths",os.path.basename(background).split('.')[0]+".bin"),'wb') as f : pickle.dump(depths,f)
-    return " ".join([str(0),str(x[0]),str(x[1]),str(y[0]),str(y[1])])
+    return " ".join([str(label),str(x[0]),str(x[1]),str(y[0]),str(y[1])])
 
 
 def light_object(back_image,light_vector,object_image,coord):
