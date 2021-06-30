@@ -171,7 +171,7 @@ def create_light_v3(image,position):
     d = 16
     radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2)/2)
     light_radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2)/d )*p
-#     dark_radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2) )
+    dark_radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2) )
     dark_radius = int(math.sqrt( (x-0)**2+(y-0)**2))
     thickness = -1
     
@@ -229,8 +229,8 @@ def brightness_matrix(image):
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     return gray/255
 
-#integrate image2 in image1
 def combine(im1, im2, light_apple, kernel=(10,10)):
+    #integrate im2 in im1
 
     shape = im1.shape
     
@@ -386,16 +386,3 @@ def paste_non_black(im1,im2):
     base[non_black_indices] = _2add[non_black_indices]
 
     return base.astype(np.uint8)
-
-
-
-
-
-
-
-
-
-
-
-
-

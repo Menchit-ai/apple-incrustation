@@ -16,6 +16,10 @@ from .utils import download_model_if_doesnt_exist
 console = Console()
 
 class depth_model():
+    """
+    This class is a wrapper using the repo monodepth2 on git.
+    It allows to use the depth model easily with loading image in it and extracting the depths.
+    """
        
     def __init__(self, model_name="mono_640x192"):
         self.model_name = model_name
@@ -49,7 +53,7 @@ class depth_model():
         Argument : filename
         """
         self.image_name = image_path
-        self.input_image = pil.open(image_path)#.convert('RGB')
+        self.input_image = pil.open(image_path)
         original_width, original_height = self.input_image.size
 
         feed_height = self.loaded_dict_enc['height']

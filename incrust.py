@@ -71,12 +71,11 @@ def main():
         filename = os.path.basename(object)
         cv.imwrite(os.path.join('.cropped_objects',filename),cropping_object)
 
-    # looping on how many images we want to generate
-    
     console.print("\n"+
         "Begining incrustations at different depths"+
         "\n", style = "bold red")
 
+    # incrust objects in random depths of wanted backgrounds
     for i in range(args.number):
         background = random.choice(backgrounds)
         back_name = os.path.basename(background).split('.')[0]
@@ -100,6 +99,7 @@ def main():
         "Reconstructing each images"+
         "\n", style = "bold red")
 
+    # reconstruct the final image using the modified depths of each image
     depths_file = [os.path.join(".depths",f) for f in os.listdir(".depths") if f.endswith(".bin")]
     for depth_file in tqdm(depths_file) : 
         with open(depth_file,'rb') as f : depth = pickle.load(f)
@@ -111,9 +111,11 @@ def main():
         "Converting all image from BGR to RGB"+
         "\n", style = "bold red")
 
+    # opencv is reading images in bgr format, so we transform all our image in rgb at the end
     bgr_files = [os.path.join(output_folder,f) for f in os.listdir(output_folder) if f.endswith(".jpg")]
     for bgr in tqdm(bgr_files) : cv.imwrite(bgr,cv.imread(bgr)[:,:,::-1])
 
+    # generating proof of the algorithm (incrusted objects in rectangle using generated coordinates)
     console.print("\n"+
         "Generating proof", 
         style = "bold red")
@@ -172,6 +174,7 @@ def incrust(background,object,back_name,label):
 
 
 def light_object(back_image,light_vector,object_image,coord):
+    # computing impact point, creating light mask and applying it to our object
     impact = lib.report_impact(back_image,coord,light_vector)
     light = lib.create_light_v2(object_image,impact)
     enlighted = lib.add_parallel_light(object_image,light)
