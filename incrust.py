@@ -3,6 +3,7 @@ import os
 import pickle
 import random
 import shutil
+import time
 
 import cv2 as cv
 from rich.console import Console
@@ -10,6 +11,7 @@ from tqdm.auto import tqdm
 
 import lib.library as lib
 from lib.depth_model import depth_model
+from proof import main as proof
 
 parser = argparse.ArgumentParser()
 parser.add_argument("background", help="the path where the background images are stored",type=str)
@@ -31,6 +33,7 @@ model = depth_model()
 console = Console()
 
 def main():
+    start_timing = time.time()
     # recover all the backgrounds' and objects' filename
     backgrounds = [os.path.join(args.background,f) for f in os.listdir(args.background)]
     objects = [os.path.join(args.objects,f) for f in os.listdir(args.objects)]
@@ -110,6 +113,14 @@ def main():
     bgr_files = [os.path.join(output_folder,f) for f in os.listdir(output_folder) if f.endswith(".jpg")]
     for bgr in tqdm(bgr_files) : cv.imwrite(bgr,cv.imread(bgr)[:,:,::-1])
 
+    console.print("\n"+
+        "Generating proof", 
+        style = "bold red")
+    proof(output_folder)
+    end_timing = time.time()
+
+    console.log("The programm was executed in {:.2f}".format(end_timing-start_timing)+"s\n", style = "bold green")
+
 
 def incrust(background,object,back_name):
     bin_background = os.path.basename(back_name).split('.')[0]
@@ -167,6 +178,6 @@ def light_object(back_image,light_vector,object_image,coord):
 
 if __name__ == "__main__":
     console.print("\n"+
-        "Starting creation using "+str(args.number)+" backgrounds."+
+        "Starting creation of "+str(args.number)+" images."+
         "\n", style = "bold red")
     main()
