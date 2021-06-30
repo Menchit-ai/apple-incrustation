@@ -14,7 +14,7 @@ The project is used through the script incrust.py runned in a terminal. To insta
 
 ## How to use it
 
-To run the script, open a terminal in the folder that contains the project and type for example : `python incrust.py ./xbackground ./xobjects 50`, this command will create 50 images using the backgrounds and the objects that are respectively in the folders xbackground and xobjects. You can use your own folder by simply replace those folders by the path to your personnal ones. By default, it will create a folder **output** and a folder **proof** and store the created images in them. If there was already a folder output or proof, there content will be **deleted**.
+To run the script, open a terminal in the folder that contains the project and type for example : ```python incrust.py ./xbackground ./xobjects 50```, this command will create 50 images using the backgrounds and the objects that are respectively in the folders xbackground and xobjects. You can use your own folder by simply replace those folders by the path to your personnal ones. By default, it will create a folder **output** and a folder **proof** and store the created images in them. If there was already a folder output or proof, there content will be **deleted**.
 
 ### Options
 
