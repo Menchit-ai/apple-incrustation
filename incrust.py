@@ -81,13 +81,15 @@ def main():
         console.print(img_filename, style = "bold blue")
         open(img_filename,'w').close()
         open(area_filename,'w').close()
-        cv.imwrite(img_filename,cv.imread(background)[:,:,::-1])
+        try : cv.imwrite(img_filename,cv.imread(background)[:,:,::-1])
+        except : raise Exception("Cannot handle "+area_filename)
         shutil.copyfile('.depths/'+os.path.basename(background).split('.')[0],'.depths/'+os.path.basename(img_filename).split(".")[0]+".bin")
 
         # incrusting a random number of objects between 1 and the iteration argument of the script
         for _ in tqdm(range(random.randint(1,args.iteration))):
             object = random.choice(objects)
-            area = incrust(img_filename, object, back_name)
+            try : area = incrust(img_filename, object, back_name)
+            except : raise Exception("Cannot handle "+object)
             with open(area_filename,'a') as f : f.write(area+"\n")
 
     console.print("\n"+

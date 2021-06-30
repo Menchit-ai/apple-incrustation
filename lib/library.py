@@ -139,7 +139,7 @@ def create_light_v2(image,position):
     # Radius of circle
     p = 13
     d = 16
-    radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2)/2)
+    radius = max(int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2)/2),1)
     light_radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2)/d )*p
     dark_radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2)/d )*(d-p)
     thickness = -1
@@ -152,6 +152,47 @@ def create_light_v2(image,position):
         new_light_radius = max(light_radius-i,0)
         new_dark_radius = max(dark_radius-i,0)       
         image = cv.circle(image, tuple(dark), new_dark_radius, new_darkness, thickness)
+        image = cv.circle(image, tuple(light), new_light_radius, new_brightness, thickness)
+
+    return image
+
+def create_light_v3(image,position):
+    import math
+    import cv2 as cv
+    
+    x,y,_ = image.shape
+    image = np.ones((x,y))*0
+    # Center coordinates
+    light = np.asarray(position)
+    dark = np.asarray([x,y]) - position
+
+    # Radius of circle
+    p = 11
+    d = 16
+    radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2)/2)
+    light_radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2)/d )*p
+#     dark_radius = int(math.sqrt( (light[0]-dark[0])**2+(light[1]-dark[1])**2) )
+    dark_radius = int(math.sqrt( (x-0)**2+(y-0)**2))
+    thickness = -1
+    
+    ran = np.arange(0,0.5,(0.5/radius))
+    
+    for i in range(radius):
+        new_brightness = min(0.5+ran[i],1)
+        new_darkness = min(0+ran[i],255)
+        new_light_radius = max(light_radius-i,0)
+        new_dark_radius = max(dark_radius-i,0)   
+        if new_dark_radius <= 0 : new_dark_radius=0
+
+        image = cv.circle(image, tuple(light), new_light_radius, new_brightness, thickness)
+        image = cv.circle(image, tuple(light), new_dark_radius, new_darkness, thickness)
+        
+    for i in range(radius):
+        new_brightness = min(0.5+ran[i],1)
+        new_darkness = min(0+ran[i],255)
+        new_light_radius = max(light_radius-i,0)
+        new_dark_radius = max(dark_radius-i,0)   
+
         image = cv.circle(image, tuple(light), new_light_radius, new_brightness, thickness)
 
     return image
@@ -315,7 +356,7 @@ def combinev3(background, object, light_object, kernel=(10,10)):
     gray = cv.cvtColor(object, cv.COLOR_BGR2GRAY)
     thresh = cv.threshold(gray, 0, 255, cv.THRESH_BINARY)[1]
     kernel = np.ones(kernel, np.uint8)
-    thresh = cv.erode(thresh, kernel, iterations=1).astype(np.uint8)
+    # thresh = cv.erode(thresh, kernel, iterations=1).astype(np.uint8)
     mask = cv.resize(thresh, (background.shape[1], background.shape[0])).astype(bool)
     
     object = cv.resize(object, (background.shape[0], background.shape[0]))
