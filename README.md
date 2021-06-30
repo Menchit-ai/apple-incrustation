@@ -10,4 +10,4 @@ It will incrust the objects in the backgrounds and try to mimic a realistics pho
 
 ## Setup
 
-The project is used through the script incrust.py runned in a terminal. To install the project, simply clone it via ´git clone <https://github.com/Menchit-ai/apple-incrustation>´
+The project is used through the script incrust.py runned in a terminal. To install the project, simply clone it via `git clone <https://github.com/Menchit-ai/apple-incrustation>`
