@@ -21,6 +21,6 @@ def main(output,proof):
         
         for line in lines:
             _,xs,xe,ys,ye = list(map(int,line.split(' ')))
-            img = cv.rectangle(img,(ys,xs),(ye,xe),(0,255,0),3)
+            img = cv.rectangle(img,(ys,xs),(ye,xe),(0,255,0),2)
         
         cv.imwrite(proof+"/"+files[i]+".jpg",img)
