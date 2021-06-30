@@ -10,4 +10,17 @@ It will incrust the objects in the backgrounds and try to mimic a realistics pho
 
 ## Setup
 
-The project is used through the script incrust.py runned in a terminal. To install the project, simply clone it via `git clone <https://github.com/Menchit-ai/apple-incrustation>`
+The project is used through the script incrust.py runned in a terminal. To install the project, simply clone it via `git clone <https://github.com/Menchit-ai/apple-incrustation>`. Then go to the folder and install the dependencies via `pip install -r requirements.txt`. If the installation finished properly, the script is ready to be used.
+
+## How to use it
+
+To run the script, open a terminal in the folder that contains the project and type for example : `python incrust.py ./xbackground ./xobjects 50`, this command will create 50 images using the backgrounds and the objects that are respectively in the folders xbackground and xobjects. You can use your own folder by simply replace those folders by the path to your personnal ones. By default, it will create a folder **output** and a folder **proof** and store the created images in them. If there was already a folder output or proof, there content will be **deleted**.
+
+### Options
+
+You can add 3 optionnal parameters :
+
+- `-i` or `--iteration` is used to specify how many objects you want to be, at most, incrusted in each images. The algortihm will incrust a random number between 1 and the number that you specified in each image. **By default** it will incrust only one object.
+- `-d` or `--depth` is used to specify how many depths you want to put in the background image. The image will be divide in the number of depth that you specified. The greater the value is, the omre you can obtain weird depth and have weird looking incrustations. **By default** the value is 4.
+- `-o` or `--output` is used to specify the path of the output folder. The output folder is where all the generated images will be stored. **By default** the value is *./output*.
+- `-p` or `--proof` is used to specify the path of the proof folder. The proof folder is where the images with boxes will be stored. The images with boxes are images where rectangle are drawn using the .txt file that contains the coordonates of the incrusted objects. Those images are usefull if you want to check if the algorithm worked properly and to find mistakes or bugs.

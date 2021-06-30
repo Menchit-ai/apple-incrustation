@@ -19,7 +19,8 @@ parser.add_argument("objects", help="the path where the objects that have to be 
 parser.add_argument("number", help="how many images you want to generate", type=int)
 parser.add_argument("-o","--output", default="./output", help="where the generated images will be stored", type=str)
 parser.add_argument("-i","--iteration", default=1, help="how many object we want at most, to incrust in one background", type=int)
-parser.add_argument("-d","--depths", default=4, help="Set how many depths we want to use in our background image", type=int)
+parser.add_argument("-d","--depth", default=4, help="set how many depths we want to use in our background image", type=int)
+parser.add_argument("-p","--proof", default="./proof", help="where the images with boxes will be stored", type=str)
 args = parser.parse_args()
 
 workdir = os.getcwd()
@@ -116,7 +117,7 @@ def main():
     console.print("\n"+
         "Generating proof", 
         style = "bold red")
-    proof(output_folder)
+    proof(output_folder,args.proof)
     end_timing = time.time()
 
     console.log("The programm was executed in {:.2f}".format(end_timing-start_timing)+"s\n", style = "bold green")
