@@ -35,4 +35,8 @@ You can add 3 optionnal parameters :
 
 ## Results
 
-end
+Using this script with iteration set at 7 and depth at 8 I can obtain 100 images in 175 seconds.
+Some results are pretty good and useable. But Sometimes, an apple can be hidden behind another or totally hidden behind some part of the background, this can lead to a bad training of a yolo that use this generated dataset. Correct this kind of problem is a first step to make those generated dataset usable. For now the light part can still be upgrade by obtaining a more precise algorithm and one that can be used even if the light source is inside the image. The depth effect is pretty good and could be tested with other type of model.
+
+Hidden apple : ![hidden_apple](images/hidden_apple.jpg)
+Depth effect : ![great_depth](images/great_depth.jpg)
