@@ -40,3 +40,11 @@ Some results are pretty good and useable. But Sometimes, an apple can be hidden 
 
 Hidden apple : ![hidden_apple](images/hidden_apple.jpg)
 Depth effect : ![great_depth](images/great_depth.jpg)
+
+## Ways of improvement
+
+- Find a more precise way to approximate the light direction in the image.
+- Handle the case when the light source is in the image.
+- Generate more advanced light mask (not just light and dark circles), maybe lasks that depends on the object's shape.
+- Write algorithm that can extract an object from it background so we do not have to set the background to black manually.
+- Test new models that extract depths in 2D images and find which one is the best and why.
