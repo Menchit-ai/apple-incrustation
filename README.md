@@ -48,3 +48,4 @@ Depth effect : ![great_depth](images/great_depth.jpg)
 - Generate more advanced light mask (not just light and dark circles), maybe lasks that depends on the object's shape.
 - Write algorithm that can extract an object from it background so we do not have to set the background to black manually.
 - Test new models that extract depths in 2D images and find which one is the best and why.
+- Here is a link to the developper's guide that will explain which function does what [devguide](devguide.md).
