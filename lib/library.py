@@ -10,6 +10,13 @@ from xgboost import XGBRegressor
 warnings.filterwarnings("ignore")
 
 def cropping_object(file):
+    """
+    Crop an object image by taking the first non black pixel as first coordinate for each axis
+    
+    Argument : image
+    Return : cropped image object
+    """
+
     img = cv.imread(file)
     positions = np.nonzero(img)
 
@@ -21,11 +28,24 @@ def cropping_object(file):
     return img[top:bottom,left:right,:]
 
 def show(matrix):
+    """
+    Convert bgr to rgb matrix
+
+    Argument : 3D matrix
+    Return : 3D matrix
+    """
+
     if len(matrix.shape)==3 : matrix = matrix[:,:,::-1]
     return Image.fromarray(matrix)
 
 def add_noise(img,iterations=1):
-  
+    """
+    Adding random noise in image by turning some black
+
+    Arguments : image (matrix), (optionnal) number of time we want to add noise
+    Return : noised matrix
+    """
+
     # Getting the dimensions of the image
     row , col = img.shape
 
@@ -45,6 +65,12 @@ def add_noise(img,iterations=1):
     return img
 
 def extract(im, size,coord=None):
+    """
+    Extract an area in an image
+
+    Arguments : image (matrix), size of the area to be extracted (in pixels), (optionnal) coordinates of the starting point (if there is one)
+    """
+
     if not len(size) == 2: raise Exception(size, "must be of len=2")
     _shape = im.shape
     if _shape[0] < size[0] or _shape[1] < size[1]:
@@ -60,6 +86,13 @@ def extract(im, size,coord=None):
     return im[x_start:x_end,y_start:y_end,:],(x_start,x_end),(y_start,y_end)
 
 def light_vectorization(image):
+    """
+    Create a vector that will be used to estimate where the light hit an object
+
+    Argument : image (matrix)
+    Return : starting point and ending point of the light vector
+    """
+
     image = cv.imread(image,cv.IMREAD_GRAYSCALE)
     thresh = cv.threshold(image, 160, 255, cv.THRESH_BINARY)[1]
     thresh = add_noise(thresh, iterations=5)
@@ -80,6 +113,13 @@ def light_vectorization(image):
 
 
 def compute_impact(image,coord,vect):
+    """
+    Compute where the light is hitting a box using light vector
+
+    Arguments : image (matrix), coordinates of the box to study, vector that represents the light
+    Return : coordinates of the area where the light is hitting
+    """
+
     x,y = coord
     start, end = vect
     if start[1] < end[1] : light, dark = np.asarray(start), np.asarray(end)
@@ -103,6 +143,13 @@ def compute_impact(image,coord,vect):
     return (impact - [x[0],y[0]]).astype(np.uint8)
 
 def report_impact(image,coord,vect):
+    """
+    Compute where the light is hitting a box using light vector
+
+    Arguments : image (matrix), coordinates of the box to study, vector that represents the light
+    Return : coordinates of the area where the light is hitting
+    """
+
     x,y = coord
     start, end = vect
     if start[1] < end[1] : light, dark = np.asarray(start), np.asarray(end)
@@ -127,6 +174,13 @@ def report_impact(image,coord,vect):
 
 
 def create_light_v2(image,position):
+    """
+    Create light mask by drawing circles, one is getting whither and the opposite is getting darker
+
+    Arguments : image (matrix), position of the light source (withe circle's center)
+    Return : light mask
+    """
+
     import math
     import cv2 as cv
     
@@ -157,6 +211,13 @@ def create_light_v2(image,position):
     return image
 
 def create_light_v3(image,position):
+    """
+    Create light mask by drawing circles, one is getting whither and the opposite is getting darker
+
+    Arguments : image (matrix), position of the light source (withe circle's center)
+    Return : light mask
+    """
+
     import math
     import cv2 as cv
     
@@ -198,6 +259,12 @@ def create_light_v3(image,position):
     return image
 
 def add_parallel_light(image, mask):
+    """
+    Apply the light mask to an image
+
+    Arguments : image (matrix), light mask which has to be apply
+    Return : image where the mask is applied
+    """
     
     frame = image.copy()
     height, width, _ = frame.shape
@@ -213,6 +280,13 @@ def add_parallel_light(image, mask):
     return frame.astype(np.uint8)
 
 def channel_operand(im,value,operand):
+    """
+    Computing operation along all axis of a 3D matrix
+
+    Arguments : matrix, value to use in calculation, which operand use
+    Return : 3D matrix where the calculation has been applied
+    """
+
     operand = operand.lower()
     
     b,g,r = im[:,:,0],im[:,:,1],im[:,:,2]
@@ -226,83 +300,25 @@ def channel_operand(im,value,operand):
     return np.dstack((b,g,r))
 
 def brightness_matrix(image):
+    """
+    Return a gray image from colour image
+
+    Argument : colour image (3D matrix)
+    Return : gray image (2D matrix)
+    """
+
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     return gray/255
 
-def combine(im1, im2, light_apple, kernel=(10,10)):
-    #integrate im2 in im1
-
-    shape = im1.shape
-    
-    gray = cv.cvtColor(im2, cv.COLOR_BGR2GRAY)
-    thresh = cv.threshold(gray, 0, 255, cv.THRESH_BINARY)[1]
-
-    kernel = np.ones(kernel, np.uint8)
-    thresh = cv.erode(thresh, kernel, iterations=1)
-
-    mask = cv.resize(thresh, (im1.shape[1], im1.shape[0])).astype(bool)
-    
-    im2 = cv.resize(im2, (im1.shape[1], im1.shape[0]))
-    light_apple = cv.resize(light_apple, (im1.shape[1], im1.shape[0]))
-
-    brightness = brightness_matrix(im1).max()
-    dimed_im2 = np.dstack(
-        (im2[:, :, 0] * brightness, im2[:, :, 1] * brightness,
-         im2[:, :, 2] * brightness)).astype(np.uint8)
-
-    final_image = np.zeros(shape)
-    for k in range(final_image.shape[2]):
-        for i in range(final_image.shape[0]):
-            for j in range(final_image.shape[1]):
-                if not mask[i, j]: final_image[i, j, k] = im1[i, j, k]
-                else: final_image[i, j, k] = light_apple[i, j, k]
-
-    final_image = final_image.astype(np.uint8)
-
-    return final_image
-
-def extract(im, size,coord=None):
-    if not len(size) == 2: raise Exception(size, "must be of len=2")
-    _shape = im.shape
-    if _shape[0] < size[0] or _shape[1] < size[1]:
-        raise Exception("Square to big for image : ", _shape[:-1], size)
-    
-    im = im.copy()
-    x_max,y_max = _shape[0]-size[0], _shape[1]-size[1]
-    
-    if coord is None : x_start,y_start = random.randint(0,x_max+1),random.randint(0,y_max+1)
-    else : x_start,y_start = coord
-    x_end,y_end = x_start+size[0],y_start+size[1]
-    
-    return im[x_start:x_end,y_start:y_end,:],(x_start,x_end),(y_start,y_end)
-
-def adjust_contrast(im1,im2,kernel=None):
-    brightness = brightness_matrix(im1)        
-    x_max,y_max,_ = im1.shape
-    if kernel is None:
-        _min = np.min(brightness)
-        _max = np.max(brightness)
-        contrast = (_max-_min)/(_max+_min)
-        return contrast * np.ones((x_max,y_max))
-    
-    
-    x_step,y_step = kernel
-    contrast = np.zeros((x_max,y_max))
-    
-    for y in range(y_max)[::y_step]:
-        for x in range(x_max)[::x_step]:
-            pixels = brightness[x:x+x_step,y:y+y_step]
-            _min = np.min(pixels)
-            _max = np.max(pixels)
-            if _max==0 and _min==0 : local_contrast=1
-            else :local_contrast = (_max-_min)/(_max+_min)
-            
-            contrast[x:x+x_step,y:y+y_step] = local_contrast
-                
-
-    return contrast
 
 def adjust_brightness(im1,im2,kernel=None):
+    """
+    Compute the difference of light between two image on a local area
+
+    Arguments : first image (3D matrix), second image (3D matrix), (optionnal) size of the local area to be checked
+    Return : matrix of differences between the two images
+    """
+
     brightness1 = brightness_matrix(im1)
     brightness2 = brightness_matrix(im2)
     x_max,y_max,_ = im1.shape
@@ -319,8 +335,50 @@ def adjust_brightness(im1,im2,kernel=None):
 
     return light
 
-#integrate image2 in image1
+def combine(im1, im2, light, kernel=(10,10)):
+    """
+    Combining two images by incrusting im2 in im1, im2's brightness is adjusted depending on im1's mean brightness
+
+    Argument : background image, object to incrust, lightened object to be incrusted, kernel used during erosion
+    Return : image where the object is incrusted
+    """
+
+    shape = im1.shape
+    
+    gray = cv.cvtColor(im2, cv.COLOR_BGR2GRAY)
+    thresh = cv.threshold(gray, 0, 255, cv.THRESH_BINARY)[1]
+
+    kernel = np.ones(kernel, np.uint8)
+    thresh = cv.erode(thresh, kernel, iterations=1)
+
+    mask = cv.resize(thresh, (im1.shape[1], im1.shape[0])).astype(bool)
+    
+    im2 = cv.resize(im2, (im1.shape[1], im1.shape[0]))
+    light = cv.resize(light, (im1.shape[1], im1.shape[0]))
+
+    brightness = brightness_matrix(im1).max()
+    dimed_im2 = np.dstack(
+        (im2[:, :, 0] * brightness, im2[:, :, 1] * brightness,
+         im2[:, :, 2] * brightness)).astype(np.uint8)
+
+    final_image = np.zeros(shape)
+    for k in range(final_image.shape[2]):
+        for i in range(final_image.shape[0]):
+            for j in range(final_image.shape[1]):
+                if not mask[i, j]: final_image[i, j, k] = im1[i, j, k]
+                else: final_image[i, j, k] = light[i, j, k]
+
+    final_image = final_image.astype(np.uint8)
+
+    return final_image
+
 def combinev2(im1, im2,kernel=(10,10)):
+    """
+    Combining two images by incrusting im2 in im1, im2's brightness is adjusted depending on im1's mean brightness in a local area
+
+    Argument : background image, object to incrust, lightened object to be incrusted, kernel used during erosion
+    Return : image where the object is incrusted
+    """
 
     shape = im1.shape
     
@@ -350,6 +408,12 @@ def combinev2(im1, im2,kernel=(10,10)):
     return final_image
 
 def combinev3(background, object, light_object, kernel=(10,10)):
+    """
+    Combining two images by incrusting im2 in im1
+
+    Argument : background image, object to incrust, lightened object to be incrusted, kernel used during erosion
+    Return : image where the object is incrusted
+    """
 
     shape = background.shape
     
@@ -373,12 +437,26 @@ def combinev3(background, object, light_object, kernel=(10,10)):
     return final_image
 
 def reconstruct(images):
+    """
+    Combine several images together by taking the first image and adding all the non black pixels of the next one and continuing for all the images
+
+    Argument : list of images (3D matrix)
+    Return : image which is the combination of all the images in the list (3D matrix)
+    """
+
     new_image = np.zeros(images[0].shape)   
     for im in images:
         new_image = paste_non_black(new_image,im)
     return new_image
 
 def paste_non_black(im1,im2):
+    """
+    Taking all the non black pixels of the second image and replacing the same pixels of the first image by them
+
+    Arguments : first image which will be the background, second image which will be pasted
+    Return : image (3D matrix)
+    """
+
     base = im1.copy()
     _2add = im2.copy()
 
